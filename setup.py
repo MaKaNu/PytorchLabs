@@ -3,17 +3,9 @@ from __future__ import absolute_import
 from setuptools import setup, find_packages
 
 setup(
-    name='SemanticSegmentation',
+    name='PytrochLabs',
     version='0.0.1',
     author="MaKaNu",
-    url="https://github.com/MaKaNu/PytorchLabs/SemanticSegmentation",
-    packages=find_packages()
-)
-
-setup(
-    name="Datasets",
-    version="0.0.1",
-    author="MaKaNu",
-    url="https://github.com/MaKaNu/PytorchLabs/Datasets",
+    url="https://github.com/MaKaNu/PytorchLabs",
     packages=find_packages()
 )
