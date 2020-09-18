@@ -23,6 +23,114 @@ WRITER = None
 ARGS = None
 
 
+
+class SysArgWrapper():
+    """ Handles all sys.argv exclusive the module. The method createValues is
+    used to select standard or user values from a key.
+
+    Attributes:
+        arglist (list): List of arguments which are passed with sys.argv
+        args (dict): Dict which was translated from arglist
+
+    """
+
+    def __init__(self, arglist:list) -> None:
+        """ Removes first entry from arglist and creates based on this recuded
+        list the dict args by cleaning the correct values in dict form.
+
+        Args:
+            arglist (list): argument list which should be sys.argv
+
+        """
+        self.arglist = arglist[1:]
+        self.args = self.cleanArguments()
+
+    @property
+    def arglist(self):
+        """ arglist getter """
+        return self._arglist
+
+    @arglist.setter
+    def arglist(self, value):
+        if not isinstance(value, list):
+            raise TypeError("value needs to be of Type list")
+        self._arglist = value
+
+    @property
+    def args(self):
+        """ args Getter"""
+        return self._args
+
+    @args.setter
+    def args(self, value):
+        if not isinstance(value, dict):
+            raise TypeError("value needs to be of Type dict")
+        self._args = value
+
+    def cleanArguments(self) -> dict:
+        """ Creates a dict from self.arglist
+            the accepted formats are:
+                --key=value : sets the value  in the returned dict['key']
+                -key value  : sets the value  in the returned dict['key']
+                --key       : sets the value of returned dict['key'] to true
+                -key        : sets the value of returned dict['key'] to true
+
+            return:
+                returns a dict with all set options.
+        """
+        ret_args = defaultdict(list)
+
+        for index, k in enumerate(self.arglist):
+            if index < len(self.arglist) - 1:
+                key_a, val_b = k, self.arglist[index+1]
+            else:
+                key_a, val_b = k, None
+
+            new_key = None
+            val = None
+
+            # double hyphen, equals
+            if key_a.startswith('--') and '=' in key_a:
+                new_key, val = key_a.split('=')
+
+            # double hyphen, no equals
+            # single hyphen, no arg
+            elif (key_a.startswith('--') and '=' not in key_a) or \
+                 (key_a.startswith('-') and (not val_b or \
+                  val_b.startswith('-'))):
+                val = True
+
+            # single hypen, arg
+            elif key_a.startswith('-') and val_b and not val_b.startswith('-'):
+                val = val_b
+
+            else:
+                if (val_b is None) or (key_a == val):
+                    continue
+                raise ValueError(
+                    'Unexpected argument pair: %s, %s' % (key_a, val_b))
+
+            # santize the key
+            key = (new_key or key_a).strip(' -')
+            ret_args[key] = ast.literal_eval(val)
+
+        return ret_args
+
+    def createValues(self, keys:dict) -> None:
+        """uses the class attribute args(dict) to set the values from self.args
+        or use standard values for different params.
+        """
+        output = dict()
+        for key , value in keys.items():
+            if key in self.args.keys():
+                output[key] = self.args[key]
+                # setattr(self, key, self.args[key])
+            else:
+                output[key] = value
+                # setattr(self, key, value)
+        return output
+
+
 class TrainParams():
     """ Class for reading the sys.argv and setting values or if not available
     use standard values.
