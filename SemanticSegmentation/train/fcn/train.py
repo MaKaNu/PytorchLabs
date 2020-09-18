@@ -8,9 +8,11 @@ from __future__ import absolute_import
 import sys
 import ast
 from pathlib import Path
+from importlib import import_module
 from collections import defaultdict
 from torch.backends import cudnn
 from tensorboardX import SummaryWriter
+
 
 from SemanticSegmentation.models.fcn8 import FCN8
 
@@ -136,8 +138,6 @@ class TrainParams():
     use standard values.
 
     Attributes:
-        arglist (list): List of arguments which are passed with sys.argv
-        args (dict): Dict which was translated from arglist
         epoch_num (int): Number of epochs the training should run
         learn_rate (float): Learning rate of the optimizer
         weight_decay (float): Weight factor for preventing overgrowth
@@ -151,21 +151,34 @@ class TrainParams():
     # pylint: disable=too-many-instance-attributes
     # 20 is reasonable in this case. (Or I dont know)
 
-    def __init__(self, arglist):
+    def __init__(self, wrapper:SysArgWrapper) -> None:
         """ Constructor
         Args:
-                arglist (list): sys.argv list
+            wrapper (SysArgWrapper): Wrapper object which transforms sys.argv
         """
-        self.arglist = arglist[1:]
-        self.args = self.cleanArguments()
-        self.createValues()
+        keys = {  # Standard Values
+            'epoch_num': 300,
+            'learn_rate': 1e-10,
+            'weight_decay': 1e-4,
+            'momentum': 0.95,
+            'lr_patience': 100,  # large patience denotes fixed learn_rate
+            'snapshot': '',  # empty string denotes learning from scratch
+            'print_freq': 20,
+            'val_save_to_img_file': False,
+            'val_img_sample_rate': 0.1  # validation to display rate
+        }
+        # self.arglist = arglist[1:]
+        # self.args = self.cleanArguments()
+        param_dict = wrapper.createValues(keys)
+        for key, value in param_dict.items():
+            setattr(self, key, value)
 
     def __repr__(self) -> str:
-        return 'TrainParams(arglist=%r), arguments:%r' \
-            % (self.arglist, (self.epoch_num, self.learn_rate,
+        return 'TrainParams(wrapper), arguments:%r' \
+            % ((self.epoch_num, self.learn_rate,
                self.weight_decay, self.momentum, self.lr_patience,
                self.snapshot, self.print_freq, str(self.val_save_to_img_file),
-               self.val_img_sample_rate))
+               self.val_img_sample_rate),)
 
     def __call__(self) -> dict:
         return {
@@ -179,28 +192,6 @@ class TrainParams():
             'val_save_to_img_file': self.val_save_to_img_file,
             'val_img_sample_rate': self.val_img_sample_rate
         }
-
-    @property
-    def arglist(self):
-        """ arglist getter """
-        return self._arglist
-
-    @arglist.setter
-    def arglist(self, value):
-        if not isinstance(value, list):
-            raise TypeError("value needs to be of Type list")
-        self._arglist = value
-
-    @property
-    def args(self):
-        """ args Getter"""
-        return self._args
-
-    @args.setter
-    def args(self, value):
-        if not isinstance(value, dict):
-            raise TypeError("value needs to be of Type dict")
-        self._args = value
 
     @property
     def epoch_num(self):
