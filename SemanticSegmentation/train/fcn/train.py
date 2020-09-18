@@ -372,13 +372,117 @@ class TrainParams():
                 setattr(self, key, value)
 
 
-def main(train_args, argv=()):
+class EnvParams():
+    """ Description
+
+    Attributes:
+        checkpt_path (Path): Path for saving Checkpoints
+        export_name (str): Export name for saving the modell
+        writer (SummaryWriter): For Writing Summary? # TODO
+
+
+    """
+
+    def __init__(self, wrapper:SysArgWrapper) -> None:
+        """ Constructor
+
+        Args:
+            wrapper (SysArgWrapper): Wrapper object which transforms sys.argv
+
+        """
+        keys = {  # Standard Values
+            'checkpt_path': Path('../../ckpt').resolve(),
+            'export_name': 'fcn',
+            'writer': None,
+            'dataset': (None, None)
+        }
+        # self.arglist = arglist[1:]
+        # self.args = self.cleanArguments()
+        param_dict = wrapper.createValues(keys)
+        for key, value in param_dict.items():
+            setattr(self, key, value)
+        if self.writer is None:
+            self.writer = SummaryWriter(self.checkpt_path / \
+                Path('exp') / Path(self.export_name))
+
+    def __repr__(self) -> str:
+        return 'EnvParams(wrapper), arguments:%r' \
+            % ((self.checkpt_path, self.export_name, self.writer, 
+                self.dataset),)
+
+    def __call__(self) -> dict:
+        return {
+            'checkpt_path': self.checkpt_path,
+            'export_name': self.export_name,
+            'writer': self.writer,
+            'dataset': self.dataset
+        }
+
+    @property
+    def checkpt_path(self):
+        """ checkpt_path Getter"""
+        return self._checkpt_path
+
+    @checkpt_path.setter
+    def checkpt_path(self, value):
+        if not isinstance(value, Path):
+            raise TypeError("value needs to be of Type str")
+        self._checkpt_path = value
+
+    @property
+    def export_name(self):
+        """ export_name Getter"""
+        return self._export_name
+
+    @export_name.setter
+    def export_name(self, value):
+        if not isinstance(value, str):
+            raise TypeError("value needs to be of Type str")
+        self._export_name = value
+
+    @property
+    def writer(self):
+        """ writer Getter"""
+        return self._writer
+
+    @writer.setter
+    def writer(self, value):
+        if not (isinstance(value, SummaryWriter) or value is None):
+            raise TypeError("value needs to be of Type SummaryWriter or None")
+        self._writer = value
+
+    @property
+    def dataset(self):
+        """ dataset Getter"""
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, value):
+        if not (isinstance(value, tuple) and \
+                all(isinstance(n, str) for n in value)):
+            raise TypeError("value needs to be of Type tuple and items str")
+        self._dataset = value
+
+
+def main(argv):
+    wrpr = SysArgWrapper(argv)
+    trainer = TrainParams(wrpr)
+    env = EnvParams(wrpr)
+
+    train_args = trainer()
+    env_args = env()
+    print(env_args['dataset'][0], env_args['dataset'][1])
+
+    try:
+        dataset = getattr(import_module(
+            'Datasets.' + env_args['dataset'][0]), env_args['dataset'][1])
+        print(repr(dataset()))
+    except ImportError as err:
+        print('Error:', err)
+
     if not argv:
         net = FCN8(num_classes=DATASET.num_classes).cuda()
 
 
 if __name__ == '__main__':
-    # main(ARGS, add_args)
-    t = TrainParams(sys.argv)
-    print(repr(t))
-    print(t())
+    main(sys.argv)
