@@ -30,14 +30,14 @@ try:
         transforms.ToPILImage(),
     ])
     visualize = transforms.Compose([
-        transforms.Scale(400),
+        transforms.Resize(400),
         transforms.CenterCrop(400),
         transforms.ToTensor()
     ])
 
     Dataset = NasaBoxSupDataset( # TODO Refactor Dataset to train valid and test set
     classfile='classes_bxsp.txt',
-    rootDir=ROOT,
+    root_dir=ROOT,
     transform=transforms.Compose(
         [ToTensor(),
         ]
