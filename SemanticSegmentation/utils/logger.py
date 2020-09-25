@@ -23,3 +23,32 @@ class CustomFormatter(logging.Formatter):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
+
+    @staticmethod
+    def longmsg(msg):
+        assert isinstance(msg, str)
+        step = 80
+        final_msg = []
+        last = 0
+        while last + step <= len(msg):
+            if msg[last + step] == ' ':
+                if msg[last: last + step][0] == ' ':
+                    final_msg.append(msg[last + 1: last + step] + '\\n')
+                else:
+                    final_msg.append(msg[last: last + step] + '\\n')
+                last = last + step
+            else:
+                new_last = msg[last: last + step].rindex(' ')
+                if msg[last: last + new_last][0] == ' ':
+                    final_msg.append(msg[last + 1: last + new_last] + '\\n')
+                else:
+                    final_msg.append(msg[last: last + new_last] + '\\n')
+                last = last + new_last
+                print(last)
+        final_msg.append(msg[last + 1:])
+        return final_msg
+
+
+if __name__ == "__main__":
+    msg = 'This is a very long message with more than 80 chars to test the method longmsgms from CustomFormatter. This should split the msg in different parts with the len klenght of 80'
+    CustomFormatter.longmsg(msg)
