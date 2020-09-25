@@ -13,9 +13,10 @@ from pathlib import Path
 from importlib import import_module
 import torch
 from torch.backends import cudnn
+from torch.nn.modules.loss import TripletMarginLoss
 from torch.utils import data
 
-from SemanticSegmentation.utils.logger import CustomFormatter
+from SemanticSegmentation.utils.logger import CustomFormatter as CF
 from SemanticSegmentation.utils.hyperparams import SysArgWrapper, EnvParams, \
     TrainParams, LogLevel
 
@@ -25,7 +26,6 @@ cudnn.benchmark = True
 
 def init_logger(wrpr):
     lvl = LogLevel(wrpr)
-    print(lvl)
 
     # create logger with 'spam_application'
     logger = logging.getLogger("train.py")
@@ -35,7 +35,7 @@ def init_logger(wrpr):
     ch = logging.StreamHandler()
     ch.setLevel(lvl.log_level)
 
-    ch.setFormatter(CustomFormatter())
+    ch.setFormatter(CF())
 
     logger.addHandler(ch)
     if lvl.wrong_value:
@@ -59,8 +59,9 @@ def main(argv):
             "Placeholder and the training will be aborted")
         abort_training = True
 
-    print(env_args['dataset'])
-    print(train_args)
+    logger.info('Loaded Dataset: ' + env_args['dataset'])
+    for key, value in train_args.items(): 
+        logger.info('Loaded Hyper Parameter: ' + key + ': ' + str(value))
 
     try:
         dataset = import_module('Datasets.' + env_args['dataset'])
