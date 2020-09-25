@@ -94,5 +94,32 @@ def main(argv):
 
         mean_std = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
+        if env.splitted:
+            count_image = len(dataset.Dataset)
+            assert env.percentage in ['60', '70', '80']
+            perc1 = int(env.percentage) / 100
+            perc2 = (1 - perc1) / 2
+            train_count = round(count_image * perc1)
+            valid_count = round(count_image * perc2)
+            test_count = count_image - train_count - valid_count
+            assert count_image == (train_count + valid_count + test_count)
+
+            dataset.Dataset.tranform = dataset.input_transform
+            dataset.Dataset.target_tranform = dataset.target_transform
+
+            trainset, validset, testset = torch.utils.data.random_split(
+                dataset.Dataset, (train_count, valid_count, test_count)
+            )
+
+            logger.debug(str((len(trainset), len(validset), len(testset))))
+        else:
+            logger.critical('NOT IMPLEMENTED!')
+
+
+
+        
+
+
+
 if __name__ == '__main__':
     main(sys.argv)
