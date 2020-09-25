@@ -312,7 +312,9 @@ class EnvParams():
             'checkpt_path': Path('../../ckpt').resolve(),
             'export_name': 'fcn',
             'writer': None,
-            'dataset': 'test'
+            'dataset': 'test',
+            'splitted': False,
+            'percentage': '80'
         }
         param_dict = self.wrapper.createValues(keys)
         for key, value in param_dict.items():
@@ -327,14 +329,19 @@ class EnvParams():
                 f' checkpt_path={self.checkpt_path},' 
                 f' export_name={self.export_name},'
                 f' writer={self.writer},' 
-                f' dataset={self.dataset}')
+                f' dataset={self.dataset},'
+                f' splitted={self.splitted},'
+                f' percentage={self.percentage}'
+                )
 
     def __call__(self) -> dict:
         return {
             'checkpt_path': self.checkpt_path,
             'export_name': self.export_name,
             'writer': self.writer,
-            'dataset': self.dataset
+            'dataset': self.dataset,
+            'splitted': self.splitted,
+            'percentage': self.percentage
         }
 
     @property
@@ -391,6 +398,28 @@ class EnvParams():
         if not (isinstance(value, str)):
             raise TypeError("value needs to be of Type str")
         self._dataset = value
+
+    @property
+    def splitted(self):
+        """ splitted Getter"""
+        return self._splitted
+    
+    @splitted.setter
+    def splitted(self, value):
+        if not isinstance(value, bool):
+            raise TypeError("value needs to be of Type bool")
+        self._splitted = value
+
+    @property
+    def percentage(self):
+        """ percentage Getter"""
+        return self._percentage
+    
+    @percentage.setter
+    def percentage(self, value):
+        if not isinstance(value, str):
+            raise TypeError("value needs to be of Type str")
+        self._percentage = value
 
 
 @dataclass
