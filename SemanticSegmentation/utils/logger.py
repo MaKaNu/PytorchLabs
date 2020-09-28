@@ -58,7 +58,30 @@ class CustomFormatter(logging.Formatter):
         final_msg.append(msg[last + 1:])
         return final_msg
 
+    @staticmethod
+    def prettify_log(logger, level, msglist):
+        assert level in ('debug', 'info', 'warning', 'error', 'critical')
+        logfunc = getattr(logger, level)
+        for msg in msglist:
+            logfunc(msg)
+
 
 if __name__ == "__main__":
-    msg = 'This is a very long message with more than 80 chars to test the method longmsgms from CustomFormatter. This should split the msg in different parts with the len klenght of 80'
-    CustomFormatter.longmsg(msg)
+    LOGGER = logging.getLogger("logger.py")
+    LOGGER.setLevel('DEBUG')
+
+    # create console handler with a higher log level
+    CH = logging.StreamHandler()
+    CH.setLevel('DEBUG')
+
+    CH.setFormatter(CustomFormatter())
+
+    LOGGER.addHandler(CH)
+
+    MSG = 'This is a very long message with more than 80 chars to test the' + \
+        'method longmsgms from CustomFormatter. This should split the msg' + \
+        'in different parts with the len klenght of 80'
+    MSG_LIST = CustomFormatter.longmsg(MSG)
+
+    for lvl in ('debug', 'info', 'warning', 'error', 'critical'):
+        CustomFormatter.prettify_log(LOGGER, lvl, MSG_LIST)
