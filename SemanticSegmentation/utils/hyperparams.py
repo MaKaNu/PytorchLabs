@@ -309,7 +309,7 @@ class EnvParams():
 
     def __post_init__(self) -> None:
         keys = {  # Standard Values
-            'checkpt_path': Path('../../ckpt').resolve(),
+            'checkpt_path': Path('./SemanticSegmentation/ckpt').resolve(),
             'export_name': 'fcn',
             'writer': None,
             'dataset': 'test',
