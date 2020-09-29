@@ -130,6 +130,6 @@ dmypy.json
 
 .vscode/launch.json
 
-SemanticSegmentation/ckpt/exp/
+SemanticSegmentation/ckpt/
 
 .vscode/settings.json
