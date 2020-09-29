@@ -2,7 +2,6 @@
 """
 from __future__ import absolute_import
 from BoxSupDataset.nasa_box_sup_dataset import NasaBoxSupDataset
-from BoxSupDataset.transforms.utils import ToTensor
 from numpy.core.fromnumeric import mean
 from torchvision import transforms
 from PIL import Image
@@ -39,7 +38,7 @@ try:
     classfile='classes_bxsp.txt',
     root_dir=ROOT,
     transform=transforms.Compose(
-        [ToTensor(),
+        [transforms.ToTensor(),
         ]
     ))
 except AssertionError as err:
