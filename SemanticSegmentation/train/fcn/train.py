@@ -10,14 +10,16 @@ from __future__ import division
 from datetime import datetime
 import random
 
-from absl import app
-from absl import flags
+
 # from absl import logging
 
-import sys
-import logging
 from pathlib import Path
 from importlib import import_module
+
+import logging
+from absl import app
+from absl import flags
+
 import torch
 from torch import optim
 from torch.autograd import Variable
