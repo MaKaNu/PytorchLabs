@@ -98,6 +98,21 @@ def init_logger():
 
     return logger
 
+def init_trainparams():
+    """ Initialize a dict based on gflags entries"""
+    train_params = {
+        'epoch_num': FLAGS.epoch_num,
+        'lr': FLAGS.learn_rate,
+        'weight_decay': FLAGS.weight_decay,
+        'momentum': FLAGS.momentum,
+        'lr_patience': FLAGS.lr_patience,
+        'snapshot': FLAGS.snapshot,
+        'print_freq': FLAGS.print_freq,
+        'val_save_to_img_file': FLAGS.val_save_to_img_file,
+        'val_img_sample_rate': FLAGS.val_img_sample_rate
+    }
+    return train_params
+
 def main(argv):
     del argv # Unused from gflags
 
