@@ -9,6 +9,10 @@ from __future__ import absolute_import
 from datetime import datetime
 import random
 
+from absl import app
+from absl import flags
+# from absl import logging
+
 import sys
 import logging
 from pathlib import Path
@@ -30,6 +34,26 @@ from SemanticSegmentation.utils.misc import check_mkdir, evaluate, AverageMeter
 from SemanticSegmentation.models.fcn8 import FCN8
 
 cudnn.benchmark = True
+
+FLAGS = flags.FLAGS
+
+# FLAGS for Learning parameters
+flags.DEFINE_integer('epoch_num', 300, 'Number of Epochs')
+flags.DEFINE_float('learn_rate', 1e-10, 'Learning rate')
+flags.DEFINE_float('weight_decay', 1e-4, 'weigth decay (L2 Penalty) for Decouple Regularization.')
+flags.DEFINE_float('momentum', 0.95, 'First coefficients used for computing running averages of gradient and its square ')
+flags.DEFINE_integer('lr_patience', 100,  'large patience denotes fixed learn_rate') # TODO CHeck Helpinfo
+flags.DEFINE_string('snapshot', '',  'empty string denotes learning from scratch')
+flags.DEFINE_integer('print_freq', 20, 'How often the Validation will be printed') # TODO Check helpinfo
+flags.DEFINE_bool('val_save_to_img_file', False, 'determine if val results should be saved as img.')
+flags.DEFINE_float('val_img_sample_rate', 0.1, 'validation to display rate')
+
+# FLAGS for environment parameters
+flags.DEFINE_string('checkpt_path', './SemanticSegmentation/ckpt', 'Checkpointpath for intermediate results.')
+flags.DEFINE_string('export_name', 'fcn', 'Name of the training process')
+flags.DEFINE_string('dataset', 'test', 'Trainingset which will be loaded.')
+flags.DEFINE_bool('splitted', False, 'determine if the dataset needs to be splitted or is already splitted in train valid and test.')
+flags.DEFINE_integer('percentage', 80, 'Amount of training data (Example: 80\% train 10\% valid 10\% test).')
 
 def init_logger(wrpr):
     lvl = LogLevel(wrpr)
@@ -292,4 +316,5 @@ def validate(
     return val_loss.avg
 
 if __name__ == '__main__':
-    main(sys.argv)
+    app.run(main)
+    # main(sys.argv)
