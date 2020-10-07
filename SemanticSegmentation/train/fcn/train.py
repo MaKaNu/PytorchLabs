@@ -25,6 +25,7 @@ from torch.nn.modules.loss import CrossEntropyLoss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 import torchvision.utils as vutils
+from tensorboardX import SummaryWriter
 
 from SemanticSegmentation.utils.logger import CustomFormatter as CF
 from SemanticSegmentation.utils.hyperparams import SysArgWrapper, EnvParams, \
@@ -75,6 +76,11 @@ def init_logger(wrpr):
     return logger
 
 def main(argv):
+    del argv # Unused from gflags
+
+    writer = SummaryWriter(Path(FLAGS.checkpt_path) / \
+                Path('exp') / Path(FLAGS.export_name))
+
     wrpr = SysArgWrapper(argv)
     logger = init_logger(wrpr)
     trainer = TrainParams(wrpr)
