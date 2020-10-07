@@ -123,25 +123,25 @@ def main(argv):
 
     # wrpr = SysArgWrapper(argv)
     logger = init_logger()
-    trainer = TrainParams(wrpr)
-    env = EnvParams(wrpr)
+    # trainer = TrainParams(wrpr)
+    # env = EnvParams(wrpr)
     abort_training = False
 
-    train_args = trainer()
-    env_args = env()
+    train_args = init_trainparams()
+    # env_args = env()
 
-
-    if env_args['dataset'] == 'test':
-        logger.warning("Dataset Test is loaded. This Dataset is only a \
-            Placeholder and the training will be aborted")
+    if FLAGS.dataset == 'test':
+        logger.warning(
+            'Dataset Test is loaded. This Dataset is only a'.join(
+                [' Placeholder and the training will be aborted']))
         abort_training = True
 
-    logger.info('Loaded Dataset: %s', env_args['dataset'])
+    logger.info('Loaded Dataset: %s', FLAGS.dataset)
     for key, value in train_args.items():
         logger.info('Loaded Hyper Parameter: %s: %s', key, str(value))
 
     try:
-        dataset = import_module('Datasets.' + env_args['dataset'])
+        dataset = import_module('Datasets.' + FLAGS.dataset)
         logger.debug(repr(dataset))
     except ImportError as err:
         print('Error:', err)
