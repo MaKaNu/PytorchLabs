@@ -66,22 +66,34 @@ flags.DEFINE_integer('percentage', 80, 'Amount of training data (Example: \
     80% train 10% valid 10% test).')
 flags.DEFINE_string('log_level', 'DEBUG', 'Defines the ')
 
-def init_logger(wrpr):
-    lvl = LogLevel(wrpr)
+def init_logger():
+    """This Function initializes the prettified logger"""
+    levels = {
+            'CRITICAL': logging.CRITICAL,
+            'ERROR': logging.ERROR,
+            'WARNING': logging.WARNING,
+            'INFO': logging.INFO,
+            'DEBUG': logging.DEBUG,
+            'NOTSET': logging.NOTSET
+            }
+    try:
+        assert FLAGS.log_level in levels.keys()
+    except AssertionError as assert_without_msg:
+        raise AssertionError('Choose valid log level: %s'%list(levels.keys())) \
+            from assert_without_msg
 
+    log_level = levels[FLAGS.log_level]
     # create logger with 'spam_application'
     logger = logging.getLogger("train.py")
-    logger.setLevel(lvl.log_level)
+    logger.setLevel(log_level)
 
     # create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(lvl.log_level)
+    consoleh = logging.StreamHandler()
+    consoleh.setLevel(log_level)
 
-    ch.setFormatter(CF())
+    consoleh.setFormatter(CF())
 
-    logger.addHandler(ch)
-    if lvl.wrong_value:
-        logger.error('Wrong Attribute for Logging level. uses DEBUG instead.')
+    logger.addHandler(consoleh)
 
     return logger
 
@@ -91,8 +103,8 @@ def main(argv):
     writer = SummaryWriter(Path(FLAGS.checkpt_path) / \
                 Path('exp') / Path(FLAGS.export_name))
 
-    wrpr = SysArgWrapper(argv)
-    logger = init_logger(wrpr)
+    # wrpr = SysArgWrapper(argv)
+    logger = init_logger()
     trainer = TrainParams(wrpr)
     env = EnvParams(wrpr)
     abort_training = False
