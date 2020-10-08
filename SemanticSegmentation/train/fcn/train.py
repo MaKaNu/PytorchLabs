@@ -85,12 +85,12 @@ def init_logger():
             'DEBUG': logging.DEBUG,
             'NOTSET': logging.NOTSET
             }
-    print(FLAGS.log_level)
     try:
         assert FLAGS.log_level in levels.keys()
     except AssertionError as assert_without_msg:
-        raise AssertionError('Choose valid log level: %s'%list(levels.keys())) \
-            from assert_without_msg
+        raise AssertionError(
+            'Choose valid log level: %s'%list(levels.keys())
+            ) from assert_without_msg
 
     log_level = levels[FLAGS.log_level]
     # create logger with 'spam_application'
