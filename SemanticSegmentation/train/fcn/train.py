@@ -85,6 +85,7 @@ def init_logger():
             'DEBUG': logging.DEBUG,
             'NOTSET': logging.NOTSET
             }
+    print(FLAGS.log_level)
     try:
         assert FLAGS.log_level in levels.keys()
     except AssertionError as assert_without_msg:
