@@ -157,7 +157,7 @@ def main(argv):
         net = FCN8(num_classes=dataset.NUM_CLASSES).cuda()
 
     # Check if Training should Continue at certain Snapshot and if load it.
-        ckpt_path, exp_name = env.checkpt_path, env.export_name
+        ckpt_path, exp_name = FLAGS.checkpt_path, FLAGS.export_name
         if len(train_args['snapshot'])==0:
             curr_epoch = 1
             train_args['best_record'] = {
@@ -183,13 +183,13 @@ def main(argv):
     # Set Network in Training Mode.
         net.train()
 
-        if env.splitted:
+        if FLAGS.splitted:
             count_image = len(dataset.Dataset)
-            assert env.percentage in ['60', '70', '80']
-            perc1 = int(env.percentage) / 100
+            assert FLAGS.percentage in [60, 70, 80]
+            perc1 = int(FLAGS.percentage) / 100
             perc2 = (1 - perc1) / 2
-            train_count = round(count_image * perc1)
-            valid_count = round(count_image * perc2)
+            train_count = int(count_image * perc1)
+            valid_count = int(count_image * perc2)
             test_count = count_image - train_count - valid_count
             assert count_image == (train_count + valid_count + test_count), \
                 "Splitted Images doesn't match length of Dataset "
@@ -218,10 +218,10 @@ def main(argv):
         optimizer = optim.Adam([
             {'params': [
         param for name, param in net.named_parameters() if name[-4:] == 'bias'],
-             'lr': 2 * train_args['learn_rate']},
+             'lr': 2 * train_args['lr']},
             {'params': [
         param for name, param in net.named_parameters() if name[-4:] != 'bias'],
-            'lr': train_args['learn_rate'],
+            'lr': train_args['lr'],
             'weight_decay': train_args['weight_decay']}
         ], betas=(train_args['momentum'], 0.999))
 
@@ -248,14 +248,15 @@ def main(argv):
         for epoch in range(curr_epoch, train_args['epoch_num'] + 1):
             train(
                 train_loader, net, criterion, optimizer, epoch, train_args,
-                env, dataset.NUM_CLASSES)
+                writer, dataset.NUM_CLASSES)
             val_loss = validate(
                 val_loader, net, criterion, optimizer, epoch, train_args,
-                dataset.restore_transform, dataset.visualize, env, logger)
+                dataset.restore_transform, dataset.visualize, dataset, writer,
+                logger)
             scheduler.step(val_loss)
 
 def train(train_loader, net, criterion, optimizer,
-          epoch, train_args, env, num_classes):
+          epoch, train_args, writer, num_classes):
     train_loss = AverageMeter()
     curr_iter = (epoch - 1) * len(train_loader)
     for i, data in enumerate(train_loader, 0):
@@ -277,7 +278,7 @@ def train(train_loader, net, criterion, optimizer,
         train_loss.update(loss.data[0], N)
 
         curr_iter += 1
-        env.writer.add_scalar('train_loss', train_loss.avg, curr_iter)
+        writer.add_scalar('train_loss', train_loss.avg, curr_iter)
 
         if (i + 1) % train_args['print_freq'] == 0:
             print('[epoch %d], [iter %d / %d], [train loss %.5f]' % (
@@ -287,11 +288,11 @@ def train(train_loader, net, criterion, optimizer,
 
 def validate(
     val_loader, net, criterion, optimizer, epoch,
-    train_args, restore, visualize, env, logger):
+    train_args, restore, visualize, dataset, writer, logger):
 
     net.eval()
 
-    ckpt_path, exp_name = env.checkpt_path, env.export_name
+    ckpt_path, exp_name = FLAGS.checkpt_path, FLAGS.export_name
 
     val_loss = AverageMeter()
     inputs_all, gts_all, predictions_all = [], [], []
@@ -351,7 +352,7 @@ def validate(
                                visualize(predictions_pil.convert('RGB'))])
         val_visual = torch.stack(val_visual, 0)
         val_visual = vutils.make_grid(val_visual, nrow=3, padding=5)
-        env.writer.add_image(snapshot_name, val_visual)
+        writer.add_image(snapshot_name, val_visual)
 
     logger.info(68 * '-')
     logger.info('[epoch %d], [val loss %.5f], [acc %.5f], [acc_cls %.5f], [mean_iu %.5f], [fwavacc %.5f]' % (
@@ -363,12 +364,12 @@ def validate(
 
     logger.info(68 * '-')
 
-    env.writer.add_scalar('val_loss', val_loss.avg, epoch)
-    env.writer.add_scalar('acc', acc, epoch)
-    env.writer.add_scalar('acc_cls', acc_cls, epoch)
-    env.writer.add_scalar('mean_iu', mean_iu, epoch)
-    env.writer.add_scalar('fwavacc', fwavacc, epoch)
-    env.writer.add_scalar('lr', optimizer.param_groups[1]['lr'], epoch)
+    writer.add_scalar('val_loss', val_loss.avg, epoch)
+    writer.add_scalar('acc', acc, epoch)
+    writer.add_scalar('acc_cls', acc_cls, epoch)
+    writer.add_scalar('mean_iu', mean_iu, epoch)
+    writer.add_scalar('fwavacc', fwavacc, epoch)
+    writer.add_scalar('lr', optimizer.param_groups[1]['lr'], epoch)
 
     net.train()
     return val_loss.avg
