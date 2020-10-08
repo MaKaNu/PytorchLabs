@@ -7,23 +7,32 @@ import sys
 
 from absl import app
 from absl import flags
-from absl import logging
+
+import logging
+
+from SemanticSegmentation.utils.logger import CustomFormatter as CF
 
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('echo', None, 'Text to echo.')
-flags.DEFINE_integer('epochs', 300, 'Number of Epochs')
-flags.DEFINE_bool('start_train', False, 'Activates Training')
 
 def main(argv):
-  del argv  # Unused.
+    del argv  # Unused.
 
-  print('Running under Python {0[0]}.{0[1]}.{0[2]}'.format(sys.version_info),
+    logger = logging.getLogger("test_gflags.py")
+    logger.setLevel(logging.INFO)
+
+    # create console handler with a higher log level
+    consoleh = logging.StreamHandler()
+    consoleh.setLevel(logging.INFO)
+
+    consoleh.setFormatter(CF())
+
+    logger.addHandler(consoleh)
+
+    print('Running under Python {0[0]}.{0[1]}.{0[2]}'.format(sys.version_info),
         file=sys.stderr)
-  logging.info('echo is %s.', FLAGS.echo)
-  logging.info('epochs is %s.', FLAGS.epochs)
-  logging.info('start_train is %s.', FLAGS.start_train)
-
+    logger.info('echo is %s.', FLAGS.echo)
 
 if __name__ == '__main__':
-  app.run(main)
+    app.run(main)
