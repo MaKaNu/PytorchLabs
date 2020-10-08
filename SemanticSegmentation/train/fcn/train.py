@@ -5,6 +5,7 @@
     and probably more
 """
 from __future__ import absolute_import
+from __future__ import division
 
 from datetime import datetime
 import random
@@ -62,13 +63,13 @@ def main(argv):
 
 
     if env_args['dataset'] == 'test':
-        logger.warning("Dataset Test is loaded. This Dataset is only a " +
-            "Placeholder and the training will be aborted")
+        logger.warning("Dataset Test is loaded. This Dataset is only a \
+            Placeholder and the training will be aborted")
         abort_training = True
 
-    logger.info('Loaded Dataset: ' + env_args['dataset'])
-    for key, value in train_args.items(): 
-        logger.info('Loaded Hyper Parameter: ' + key + ': ' + str(value))
+    logger.info('Loaded Dataset: %s', env_args['dataset'])
+    for key, value in train_args.items():
+        logger.info('Loaded Hyper Parameter: %s: %s', key, str(value))
 
     try:
         dataset = import_module('Datasets.' + env_args['dataset'])
@@ -88,18 +89,24 @@ def main(argv):
                 'epoch': 0, 'val_loss': 1e10, 'acc': 0, 'acc_cls': 0,
                 'mean_iu': 0, 'fwavacc': 0}
         else:
-            logger.info('training resumes from ' + train_args['snapshot'])
-            net.load_state_dict(torch.load(ckpt_path / Path(exp_name) / Path(train_args['snapshot'])))
+            logger.info('training resumes from %s', train_args['snapshot'])
+            net.load_state_dict(
+                torch.load(
+                    ckpt_path / Path(exp_name) / Path(train_args['snapshot'])
+                    )
+                )
             split_snapshot = train_args['snapshot'].split('_')
             curr_epoch = int(split_snapshot[1]) + 1
-            train_args['best_record'] = {'epoch': int(split_snapshot[1]), 'val_loss': float(split_snapshot[3]),
-                                        'acc': float(split_snapshot[5]), 'acc_cls': float(split_snapshot[7]),
-                                        'mean_iu': float(split_snapshot[9]), 'fwavacc': float(split_snapshot[11])}
-    
-    # Set Network in Training Mode.
-        net.train() 
+            train_args['best_record'] = {
+                'epoch': int(split_snapshot[1]),
+                'val_loss': float(split_snapshot[3]),
+                'acc': float(split_snapshot[5]),
+                'acc_cls': float(split_snapshot[7]),
+                'mean_iu': float(split_snapshot[9]),
+                'fwavacc': float(split_snapshot[11])}
 
-        mean_std = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    # Set Network in Training Mode.
+        net.train()
 
         if env.splitted:
             count_image = len(dataset.Dataset)
@@ -109,7 +116,8 @@ def main(argv):
             train_count = round(count_image * perc1)
             valid_count = round(count_image * perc2)
             test_count = count_image - train_count - valid_count
-            assert count_image == (train_count + valid_count + test_count)
+            assert count_image == (train_count + valid_count + test_count), \
+                "Splitted Images doesn't match length of Dataset "
 
             dataset.Dataset.transform = dataset.input_transform
             dataset.Dataset.target_transform = dataset.target_transform
@@ -138,11 +146,10 @@ def main(argv):
              'lr': 2 * train_args['learn_rate']},
             {'params': [
         param for name, param in net.named_parameters() if name[-4:] != 'bias'],
-            'lr': train_args['learn_rate'], 
+            'lr': train_args['learn_rate'],
             'weight_decay': train_args['weight_decay']}
         ], betas=(train_args['momentum'], 0.999))
 
-        
         if len(train_args['snapshot']) > 0:
             optimizer.load_state_dict(torch.load(
                 ckpt_path / Path(exp_name) / \
@@ -165,10 +172,10 @@ def main(argv):
             min_lr=1e-10, verbose=True)
         for epoch in range(curr_epoch, train_args['epoch_num'] + 1):
             train(
-                train_loader, net, criterion, optimizer, epoch, train_args, 
+                train_loader, net, criterion, optimizer, epoch, train_args,
                 env, dataset.NUM_CLASSES)
             val_loss = validate(
-                val_loader, net, criterion, optimizer, epoch, train_args, 
+                val_loader, net, criterion, optimizer, epoch, train_args,
                 dataset.restore_transform, dataset.visualize, env, logger)
             scheduler.step(val_loss)
 
@@ -204,7 +211,7 @@ def train(train_loader, net, criterion, optimizer,
 
 
 def validate(
-    val_loader, net, criterion, optimizer, epoch, 
+    val_loader, net, criterion, optimizer, epoch,
     train_args, restore, visualize, env, logger):
 
     net.eval()

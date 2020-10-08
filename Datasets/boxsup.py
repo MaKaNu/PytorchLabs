@@ -20,7 +20,6 @@ try:
     mean_std = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
     input_transform = transforms.Compose([
-        extented_transforms.RGBChannel(),
         transforms.ToTensor(),
         transforms.Normalize(*mean_std),
     ])
@@ -36,7 +35,7 @@ try:
         transforms.ToTensor()
     ])
 
-    Dataset = NasaBoxSupDataset( # TODO Refactor Dataset to train valid and test set
+    Dataset = NasaBoxSupDataset(
     classfile='classes_bxsp.txt',
     root_dir=ROOT,
     transform=transforms.Compose(
