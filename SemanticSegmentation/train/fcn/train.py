@@ -19,7 +19,9 @@ from importlib import import_module
 import logging
 from absl import app
 from absl import flags
+import absl.logging
 
+import numpy as np
 import torch
 from torch import optim
 from torch.autograd import Variable
@@ -38,6 +40,10 @@ from SemanticSegmentation.utils.misc import check_mkdir, evaluate, AverageMeter
 from SemanticSegmentation.models.fcn8 import FCN8
 
 cudnn.benchmark = True
+
+
+absl.logging.set_verbosity(absl.logging.FATAL)
+absl.logging.set_stderrthreshold(absl.logging.FATAL)
 
 FLAGS = flags.FLAGS
 
