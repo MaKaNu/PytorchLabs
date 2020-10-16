@@ -132,4 +132,6 @@ dmypy.json
 
 SemanticSegmentation/ckpt/
 
+Pytrochlabs-venv-3_7/
+
 .vscode/settings.json
