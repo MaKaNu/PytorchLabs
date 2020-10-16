@@ -299,25 +299,28 @@ def validate(
     inputs_all, gts_all, predictions_all = [], [], []
 
     for _, data in enumerate(val_loader):
-        inputs, gts = data
+        inputs, gts = data['image'], data['label']
         N = inputs.size(0)
-        inputs = Variable(inputs, volatile=True).cuda()
-        gts = Variable(gts, volatile=True).cuda()
+        
+        with torch.no_grad():
+            inputs = Variable(inputs).cuda()
+            gts = Variable(gts).cuda()
 
         outputs = net(inputs)
-        predictions = outputs.data.max(1)[1].squeeze_(1).squeeze_(0).cpu().numpy()
+            predictions = outputs.max(1)[1].squeeze_(1).squeeze_(0).cpu().numpy()
 
-        val_loss.update(criterion(outputs, gts).data[0] / N, N)
+            val_loss.update(criterion(outputs, gts).item() / N, N)
 
         if random.random() > train_args['val_img_sample_rate']:
             inputs_all.append(None)
         else:
             inputs_all.append(inputs.data.squeeze_(0).cpu())
-        gts_all.append(gts.data.squeeze_(0).cpu().numpy())
+
+            gts_all.append(gts.squeeze_(0).cpu().numpy())
         predictions_all.append(predictions)
 
     acc, acc_cls, mean_iu, fwavacc = evaluate(
-        predictions_all, gts_all, dataset.num_classes)
+        predictions_all, gts_all, dataset.NUM_CLASSES)
 
     if mean_iu > train_args['best_record']['mean_iu']:
         train_args['best_record']['val_loss'] = val_loss.avg
