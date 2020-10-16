@@ -6,14 +6,15 @@ from numpy.core.fromnumeric import mean
 from torchvision import transforms
 from PIL import Image
 import numpy as np
+from absl import flags
 
 from Datasets.utils.errors import LoadingError
 import Datasets.utils.transforms as extented_transforms
 
 NUM_CLASSES = 7
 IGNORE_LABEL = 255
-ROOT = 'D:/Mitarbeiter/Kaupenjohann/09_GIT/PyTorch_Nasa_Dataset/data/TestBatch'
 
+FLAGS = flags.FLAGS
 
 # Try to load the Dataset
 try:
@@ -37,7 +38,7 @@ try:
 
     Dataset = NasaBoxSupDataset(
     classfile='classes_bxsp.txt',
-    root_dir=ROOT,
+    root_dir=FLAGS.dataset_path,
     transform=transforms.Compose(
         [transforms.ToTensor(),
         ]
