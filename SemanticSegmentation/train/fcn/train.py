@@ -276,7 +276,7 @@ def train(train_loader, net, criterion, optimizer,
         loss.backward()
         optimizer.step()
 
-        train_loss.update(loss.data[0], N)
+        train_loss.update(loss.data.item(), N)
 
         curr_iter += 1
         writer.add_scalar('train_loss', train_loss.avg, curr_iter)
