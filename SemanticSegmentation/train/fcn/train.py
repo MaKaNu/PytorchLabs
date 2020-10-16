@@ -1,3 +1,4 @@
+#! /home/matti/GIT/PytorchLabs/Pytrochlabs-venv-3_7/bin/ python
 """ This Module is for setting up the training on a specific dataset with fcn
     network.
 
@@ -19,7 +20,6 @@ from importlib import import_module
 import logging
 from absl import app
 from absl import flags
-import absl.logging
 
 import numpy as np
 import torch
@@ -42,8 +42,24 @@ from SemanticSegmentation.models.fcn8 import FCN8
 cudnn.benchmark = True
 
 
-absl.logging.set_verbosity(absl.logging.FATAL)
-absl.logging.set_stderrthreshold(absl.logging.FATAL)
+try:
+    # PytorchLab uses Google's abseil-py library, which uses a Google-specific
+    # wrapper for logging. That wrapper will write a warning to sys.stderr if
+    # the Google command-line flags library has not been initialized.
+    #
+    # https://github.com/abseil/abseil-py/blob/pypi-v0.7.1/absl/logging/__init__.py#L819-L825
+    #
+    # This is not right behavior for Python code that is invoked outside of a
+    # Google-authored main program. Use knowledge of abseil-py to disable that
+    # warning; ignore and continue if something goes wrong.
+    import absl.logging
+
+    # https://github.com/abseil/abseil-py/issues/99
+    logging.root.removeHandler(absl.logging._absl_handler)
+    # https://github.com/abseil/abseil-py/issues/102
+    absl.logging._warn_preinit_stderr = False
+except Exception:
+    pass
 
 FLAGS = flags.FLAGS
 
@@ -65,6 +81,7 @@ flags.DEFINE_bool('val_save_to_img_file', False, 'determine if val results \
 flags.DEFINE_float('val_img_sample_rate', 0.1, 'validation to display rate')
 
 # FLAGS for environment parameters
+flags.DEFINE_string('dataset_path', '.', 'Diretory with the dataset')
 flags.DEFINE_string('checkpt_path', './SemanticSegmentation/ckpt', \
     'Checkpointpath for intermediate results.')
 flags.DEFINE_string('export_name', 'fcn', 'Name of the training process')
@@ -306,18 +323,18 @@ def validate(
             inputs = Variable(inputs).cuda()
             gts = Variable(gts).cuda()
 
-        outputs = net(inputs)
+            outputs = net(inputs)
             predictions = outputs.max(1)[1].squeeze_(1).squeeze_(0).cpu().numpy()
 
             val_loss.update(criterion(outputs, gts).item() / N, N)
 
-        if random.random() > train_args['val_img_sample_rate']:
-            inputs_all.append(None)
-        else:
-            inputs_all.append(inputs.data.squeeze_(0).cpu())
+            if random.random() > train_args['val_img_sample_rate']:
+                inputs_all.append(None)
+            else:
+                inputs_all.append(inputs.data.squeeze_(0).cpu())
 
             gts_all.append(gts.squeeze_(0).cpu().numpy())
-        predictions_all.append(predictions)
+            predictions_all.append(predictions)
 
     acc, acc_cls, mean_iu, fwavacc = evaluate(
         predictions_all, gts_all, dataset.NUM_CLASSES)
@@ -357,7 +374,7 @@ def validate(
             val_visual.extend([
                 visualize(input_pil.convert('RGB')),
                 visualize(gt_pil.convert('RGB')),
-                               visualize(predictions_pil.convert('RGB'))])
+                visualize(predictions_pil.convert('RGB'))])
         val_visual = torch.stack(val_visual, 0)
         val_visual = vutils.make_grid(val_visual, nrow=3, padding=5)
         writer.add_image(snapshot_name, val_visual)
