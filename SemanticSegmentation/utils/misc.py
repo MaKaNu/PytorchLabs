@@ -6,6 +6,7 @@ import os
 from math import ceil
 
 import numpy as np
+from numpy.core.numeric import zeros_like
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -147,10 +148,21 @@ def evaluate(predictions, gts, num_classes):
         hist += _fast_hist(lp.flatten(), lt.flatten(), num_classes)
     # axis 0: gt, axis 1: prediction
     acc = np.diag(hist).sum() / hist.sum()
-    acc_cls = np.diag(hist) / hist.sum(axis=1)
-    acc_cls = np.nanmean(acc_cls)
-    iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
-    mean_iu = np.nanmean(iu)
+    acc_cls = np.divide(
+        np.diag(hist).sum(),
+        hist.sum(axis=1),
+        out=zeros_like(hist.sum(axis=1)),
+        where=hist.sum(axis=1)!=0
+        )
+    acc_cls = np.mean(acc_cls)
+
+    iu = np.divide(
+        np.diag(hist),
+        hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist),
+        out=zeros_like(hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)),
+        where=hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)!=0
+    )
+    mean_iu = np.mean(iu)
     freq = hist.sum(axis=1) / hist.sum()
     fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
     return acc, acc_cls, mean_iu, fwavacc
