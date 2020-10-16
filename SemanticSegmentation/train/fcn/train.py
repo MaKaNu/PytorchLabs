@@ -350,9 +350,13 @@ def validate(
             predictions_pil = dataset.colorize_mask(data[2])
             if train_args['val_save_to_img_file']:
                 input_pil.save(to_save_dir / Path('%d_input.png' % idx))
-                predictions_pil.save(to_save_dir / Path('%d_prediction.png' % idx))
+                predictions_pil.save(
+                    to_save_dir / Path('%d_prediction.png' % idx))
                 gt_pil.save(to_save_dir / Path('%d_gt.png' % idx))
-            val_visual.extend([visualize(input_pil.convert('RGB')), visualize(gt_pil.convert('RGB')),
+
+            val_visual.extend([
+                visualize(input_pil.convert('RGB')),
+                visualize(gt_pil.convert('RGB')),
                                visualize(predictions_pil.convert('RGB'))])
         val_visual = torch.stack(val_visual, 0)
         val_visual = vutils.make_grid(val_visual, nrow=3, padding=5)
