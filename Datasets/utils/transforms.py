@@ -53,3 +53,11 @@ class RandomGaussianBlur(object):
         blurred_img = gaussian(np.array(img), sigma=sigma, multichannel=True)
         blurred_img *= 255
         return Image.fromarray(blurred_img.astype(np.uint8))
+
+class RGBChannel(object):
+    def __call__(self, img):
+        assert (len(img.shape) == 2 or len(img.shape) == 3), \
+            'img should be RGB or one Channel image.'
+        if len(img.shape) == 2:
+            img = np.dstack([img]*3)
+        return img

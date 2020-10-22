@@ -15,13 +15,14 @@ NUM_CLASSES = 7
 IGNORE_LABEL = 255
 ROOT = 'D:/Mitarbeiter/Kaupenjohann/09_GIT/PyTorch_Nasa_Dataset/data/TestBatch'
 
+
 # Try to load the Dataset
 try:
     mean_std = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
     input_transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(*mean_std)
+        transforms.Normalize(*mean_std),
     ])
 
     target_transform = extented_transforms.MaskToTensor()
@@ -35,11 +36,11 @@ try:
         transforms.ToTensor()
     ])
 
-    Dataset = NasaBoxSupDataset( # TODO Refactor Dataset to train valid and test set
+    Dataset = NasaBoxSupDataset(
     classfile='classes_bxsp.txt',
     root_dir=ROOT,
     transform=transforms.Compose(
-        [ToTensor(),
+        [transforms.ToTensor(),
         ]
     ))
 except AssertionError as err:

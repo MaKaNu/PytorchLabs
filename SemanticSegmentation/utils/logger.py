@@ -41,22 +41,24 @@ class CustomFormatter(logging.Formatter):
             list with all the elements with len < step
         """
         assert isinstance(msg, str)
-        step = 80
+        step = 56
         final_msg = []
         last = 0
         while last + step <= len(msg):
             if msg[last + step] == ' ':
                 if msg[last: last + step][0] == ' ':
-                    final_msg.append(msg[last + 1: last + step] + '\\n')
+                    final_msg.append(msg[last + 1: last + step])
                 else:
-                    final_msg.append(msg[last: last + step] + '\\n')
+                    final_msg.append(msg[last: last + step])
                 last = last + step
             else:
                 new_last = msg[last: last + step].rindex(' ')
+                if new_last == 0:
+                    new_last = last
                 if msg[last: last + new_last][0] == ' ':
-                    final_msg.append(msg[last + 1: last + new_last] + '\\n')
+                    final_msg.append(msg[last + 1: last + new_last])
                 else:
-                    final_msg.append(msg[last: last + new_last] + '\\n')
+                    final_msg.append(msg[last: last + new_last])
                 last = last + new_last
                 print(last)
         final_msg.append(msg[last + 1:])
@@ -83,9 +85,10 @@ if __name__ == "__main__":
     LOGGER.addHandler(CH)
 
     MSG = 'This is a very long message with more than 80 chars to test the' + \
-        'method longmsgms from CustomFormatter. This should split the msg' + \
-        'in different parts with the len klenght of 80'
+        ' method longmsgms from CustomFormatter. This should split the msg' + \
+        ' in different parts with the len klenght of 80'
     MSG_LIST = CustomFormatter.longmsg(MSG)
 
+    print(120 * '-')
     for lvl in ('debug', 'info', 'warning', 'error', 'critical'):
         CustomFormatter.prettify_log(LOGGER, lvl, MSG_LIST)
