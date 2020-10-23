@@ -1,16 +1,38 @@
 """ This Module creates Dataset for Pascal VOC Dataset
 """
 
+from logging import root
 import numpy as np
 from pathlib import Path
 import scipy.io as sio
 import torch
+from torchvision import transforms
 from PIL import Image
 from torch.utils import data
 
+from Datasets.utils.errors import LoadingError
+import Datasets.utils.transforms as extented_transforms
+
 NUM_CLASSES = 21
 IGNORE_LABEL = 255
-ROOT = '/media/b3-542/LIBRARY/Datasets/VOC'
+
+MEAN_STD = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+
+INPUT_TRANSFORMS = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(*MEAN_STD),
+])
+
+TARGET_TRANSFORMS = extented_transforms.MaskToTensor()
+RESTORE_TRANSFORMS = transforms.Compose([
+    extented_transforms.DeNormalize(*MEAN_STD),
+    transforms.ToPILImage(),
+])
+VISUALIZE_TRANSFORMS = transforms.Compose([
+    transforms.Resize(400),
+    transforms.CenterCrop(400),
+    transforms.ToTensor()
+])
 
 PALETTE = [             # color map
     0, 0, 0,            # 0=background
@@ -40,6 +62,23 @@ ZERO_PAD = 256 * 3 - len(PALETTE)
 for i in range(ZERO_PAD):
     PALETTE.append(0)
 
+MEAN_STD = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+
+INPUT_TRANSFORMS = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(*MEAN_STD),
+])
+
+TARGET_TRANSFORMS = extented_transforms.MaskToTensor()
+RESTORE_TRANSFORMS = transforms.Compose([
+    extented_transforms.DeNormalize(*MEAN_STD),
+    transforms.ToPILImage(),
+])
+VISUALIZE_TRANSFORMS = transforms.Compose([
+    transforms.Resize(400),
+    transforms.CenterCrop(400),
+    transforms.ToTensor()
+])
 
 def colorize_mask(mask):
     # mask: numpy array of the mask

@@ -1,13 +1,20 @@
 """ This Module creates Dataset based on the BoxSupDataset Package
 """
 from __future__ import absolute_import
+from pathlib import Path
+import glob
+import torch
+from torch.utils.data import Dataset
+from pandas.core.frame import DataFrame
+import pandas as pd
 from torchvision import transforms
+import scipy.io as sio
 from PIL import Image
 import numpy as np
 from absl import flags
 
-from BoxSupDataset.nasa_box_sup_dataset import NasaBoxSupDataset
-from BoxSupDataset.transforms.utils import ToTensor
+from boxsupdataset.nasa_box_sup_dataset import NasaBoxSupDataset
+from boxsupdataset.transforms.utils import ToTensor
 
 from Datasets.utils.errors import LoadingError
 import Datasets.utils.transforms as extented_transforms
@@ -17,47 +24,49 @@ IGNORE_LABEL = 255
 
 FLAGS = flags.FLAGS
 
-# Try to load the Dataset
-try:
-    mean_std = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+MEAN_STD = ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
-    input_transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(*mean_std),
-    ])
+INPUT_TRANSFORMS = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(*MEAN_STD),
+])
 
-    target_transform = extented_transforms.MaskToTensor()
-    restore_transform = transforms.Compose([
-        extented_transforms.DeNormalize(*mean_std),
-        transforms.ToPILImage(),
-    ])
-    visualize = transforms.Compose([
-        transforms.Resize(400),
-        transforms.CenterCrop(400),
-        transforms.ToTensor()
-    ])
+TARGET_TRANSFORMS = extented_transforms.MaskToTensor()
+RESTORE_TRANSFORMS = transforms.Compose([
+    extented_transforms.DeNormalize(*MEAN_STD),
+    transforms.ToPILImage(),
+])
+VISUALIZE_TRANSFORMS = transforms.Compose([
+    transforms.Resize(400),
+    transforms.CenterCrop(400),
+    transforms.ToTensor()
+])
 
-    Dataset = NasaBoxSupDataset(
-    classfile='classes_bxsp.txt',
-    root_dir=FLAGS.dataset_path,
-    transform=transforms.Compose(
-        [transforms.ToTensor(),
-        ]
-    ))
-except AssertionError as err:
-    raise LoadingError(err.args[0].split(' ',1)[0]) from err
+# # Try to load the Dataset
+# try:
+#     Dataset = NasaBoxSupDataset(
+#     classfile='classes_bxsp.txt',
+#     root_dir=FLAGS.dataset_path,
+#     transform=transforms.Compose(
+#         [transforms.ToTensor(),
+#         ]
+#     ))
+# except AssertionError as err:
+#     raise LoadingError(err.args[0].split(' ',1)[0]) from err
 
-# color map
-# 0=background, 1=sand, 2=soil, 3=bedrock, 4=big rocks, 5=sky, 6=robot
+PALETTE = [             # color map
+    0, 0, 0,            # 0=background
+    143, 118, 127,      # 1=sand
+    62, 29, 248,        # 2=soil
+    125, 52, 240,       # 3=bedrock
+    100, 251, 254,      # 4=bigrock
+    32, 238, 154,       # 5=sky
+    115, 159, 217       # 6=robot
+    ]
 
-palette = [0, 0, 0]
-
-for obj_cls in Dataset.classes.iterrows():
-    palette.extend(list(obj_cls[1])[1:])
-
-ZERO_PAD = 256 * 3 - len(palette)
+ZERO_PAD = 256 * 3 - len(PALETTE)
 for i in range(ZERO_PAD):
-    palette.append(0)
+    PALETTE.append(0)
 
 
 def colorize_mask(mask: np.ndarray) -> np.ndarray:
@@ -68,7 +77,7 @@ def colorize_mask(mask: np.ndarray) -> np.ndarray:
         new_mask: numpy array of the colored mask
     """
     new_mask = Image.fromarray(mask.astype(np.uint8)).convert('P')
-    new_mask.putpalette(palette)
+    new_mask.putpalette(PALETTE)
 
     return new_mask
 
