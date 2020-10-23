@@ -1,12 +1,13 @@
 """ This Module creates Dataset based on the BoxSupDataset Package
 """
 from __future__ import absolute_import
-from boxsupdataset.nasa_box_sup_dataset import NasaBoxSupDataset
-from numpy.core.fromnumeric import mean
 from torchvision import transforms
 from PIL import Image
 import numpy as np
 from absl import flags
+
+from BoxSupDataset.nasa_box_sup_dataset import NasaBoxSupDataset
+from BoxSupDataset.transforms.utils import ToTensor
 
 from Datasets.utils.errors import LoadingError
 import Datasets.utils.transforms as extented_transforms
