@@ -29,6 +29,7 @@ from torch.backends import cudnn
 from torch.nn.modules.loss import CrossEntropyLoss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
+from torchvision import transforms
 import torchvision.utils as vutils
 from tensorboardX import SummaryWriter
 
@@ -145,34 +146,31 @@ def main(argv):
     writer = SummaryWriter(Path(FLAGS.checkpt_path) / \
                 Path('exp') / Path(FLAGS.export_name))
 
-    # wrpr = SysArgWrapper(argv)
+    # - Initialize the Custom Logger -
+    #   At the Moment the python logger and the absl logger interfere.
     logger = init_logger()
-    # trainer = TrainParams(wrpr)
-    # env = EnvParams(wrpr)
-    abort_training = False
 
     train_args = init_trainparams()
-    # env_args = env()
 
     if FLAGS.dataset == 'test':
         logger.warning(
             'Dataset Test is loaded. This Dataset is only a'.join(
                 [' Placeholder and the training will be aborted']))
-        abort_training = True
+        return
 
     logger.info('Loaded Dataset: %s', FLAGS.dataset)
     for key, value in train_args.items():
         logger.info('Loaded Hyper Parameter: %s: %s', key, str(value))
 
     try:
-        dataset = import_module('Datasets.' + FLAGS.dataset)
-        logger.debug(repr(dataset))
+        dataset_module = import_module('Datasets.' + FLAGS.dataset)
+        logger.debug(repr(dataset_module))
     except ImportError as err:
         print('Error:', err)
-        dataset = None
+        dataset_module = None
 
-    if not abort_training and dataset is not None:
-        net = FCN8(num_classes=dataset.NUM_CLASSES).cuda()
+    if dataset_module is not None:
+        net = FCN8(num_classes=dataset_module.NUM_CLASSES).cuda()
 
     # Check if Training should Continue at certain Snapshot and if load it.
         ckpt_path, exp_name = FLAGS.checkpt_path, FLAGS.export_name
@@ -201,8 +199,27 @@ def main(argv):
     # Set Network in Training Mode.
         net.train()
 
+    # Load the specified Dataset. The Datasetclass is part of the module, which 
+    # is loaded above. So the class object is first created with getattr. The
+    # Name of the dataset ist the same as the modules name but in uppercase.
+        dataset_class = getattr(dataset_module, FLAGS.dataset.upper())
+
+        loaded_dataset = dataset_class(
+            root_dir = FLAGS.dataset_path
+        )
+
+    # A Dataset could either splitted already or it needs to be splitted 
+    # manually. About the Flag Argument percentage the user decide how the
+    # dataset should be splitted. For Example percentage is 80, then the dataset
+    # is splitted in 80% Trainingset, 10% Validationset and 10% Testset. The
+    # numbers are floored  
         if FLAGS.splitted:
-            count_image = len(dataset.Dataset)
+            # Create an instance of the dataset_class
+            loaded_dataset = dataset_class(
+                root_dir = FLAGS.dataset_path
+            )
+            
+            count_image = len(loaded_dataset)
             assert FLAGS.percentage in [60, 70, 80]
             perc1 = int(FLAGS.percentage) / 100
             perc2 = (1 - perc1) / 2
@@ -212,18 +229,27 @@ def main(argv):
             assert count_image == (train_count + valid_count + test_count), \
                 "Splitted Images doesn't match length of Dataset "
 
-            dataset.Dataset.transform = dataset.input_transform
-            dataset.Dataset.target_transform = dataset.target_transform
+            loaded_dataset.transform = dataset_module.INPUT_TRANSFORMS
+            loaded_dataset.target_transform = dataset_module.TARGET_TRANSFORMS
 
             trainset, validset, testset = torch.utils.data.random_split(
-                dataset.Dataset, (train_count, valid_count, test_count)
+                loaded_dataset, (train_count, valid_count, test_count)
             )
 
             logger.debug(str((len(trainset), len(validset), len(testset))))
         else:
-            validset = None
-            trainset = None
-            logger.critical('NOT IMPLEMENTED!')
+            trainset = loaded_dataset = dataset_class(
+                root_dir=FLAGS.dataset_path,
+                mode='train',
+                transform=dataset_module.INPUT_TRANSFORMS,
+                target_transform=dataset_module.TARGET_TRANSFORMS
+            )
+            validset = loaded_dataset = dataset_class(
+                root_dir=FLAGS.dataset_path,
+                mode='val',
+                transform=dataset_module.INPUT_TRANSFORMS,
+                target_transform=dataset_module.TARGET_TRANSFORMS
+            )
 
         train_loader = DataLoader(
             trainset, batch_size=1, num_workers=0, shuffle=True)
@@ -231,7 +257,7 @@ def main(argv):
             validset, batch_size=1, num_workers=0, shuffle=False)
 
         criterion = CrossEntropyLoss(
-            reduction='sum', ignore_index=dataset.IGNORE_LABEL).cuda()
+            reduction='sum', ignore_index=dataset_module.IGNORE_LABEL).cuda()
 
         optimizer = optim.Adam([
             {'params': [
@@ -266,10 +292,12 @@ def main(argv):
         for epoch in range(curr_epoch, train_args['epoch_num'] + 1):
             train(
                 train_loader, net, criterion, optimizer, epoch, train_args,
-                writer, dataset.NUM_CLASSES)
+                writer, dataset_module.NUM_CLASSES)
             val_loss = validate(
                 val_loader, net, criterion, optimizer, epoch, train_args,
-                dataset.restore_transform, dataset.visualize, dataset, writer,
+                dataset_module.RESTORE_TRANSFORMS, 
+                dataset_module.VISUALIZE_TRANSFORMS,
+                dataset_module, writer,
                 logger)
             scheduler.step(val_loss)
 
