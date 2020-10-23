@@ -49,8 +49,9 @@ def colorize_mask(mask):
     return new_mask
 
 class VOC(data.Dataset):
-    def __init__(self, mode, joint_transform=None, sliding_crop=None,
+    def __init__(self, root_dir, mode='train', joint_transform=None, sliding_crop=None,
                  transform=None, target_transform=None):
+        self.root_dir = root_dir
         self.imgs = self.make_dataset(mode)
         if len(self.imgs) == 0:
             raise RuntimeError('Found 0 images, please check the data set')
@@ -101,20 +102,21 @@ class VOC(data.Dataset):
         assert mode in ['train', 'val', 'test']
         items = []
         if mode == 'train':
-            img_path = Path(ROOT, 'benchmark_RELEASE', 'dataset', 'img')
-            mask_path = Path(ROOT, 'benchmark_RELEASE', 'dataset', 'cls')
+            img_path = Path(self.root_dir, 'benchmark_RELEASE', 'dataset', 'img')
+            mask_path = Path(self.root_dir, 'benchmark_RELEASE', 'dataset', 'cls')
             data_list = [l.strip('\n') for l in open(Path(
-                ROOT, 'benchmark_RELEASE', 'dataset', 'train.txt')).readlines()]
+                self.root_dir, 'benchmark_RELEASE',
+                'dataset', 'train.txt')).readlines()]
             for it in data_list:
                 item = (
                     Path(img_path, it + '.jpg'),    # Path to train image
                     Path(mask_path, it + '.mat'))   # Path to train mask
                 items.append(item)
         elif mode == 'val':
-            img_path = Path(ROOT, 'VOCdevkit', 'VOC2012', 'JPEGImages')
-            mask_path = Path(ROOT, 'VOCdevkit', 'VOC2012', 'SegmentationClass')
+            img_path = Path(self.root_dir, 'VOCdevkit', 'VOC2012', 'JPEGImages')
+            mask_path = Path(self.root_dir, 'VOCdevkit', 'VOC2012', 'SegmentationClass')
             data_list = [l.strip('\n') for l in open(Path(
-                ROOT, 'VOCdevkit', 'VOC2012', 'ImageSets',
+                self.root_dir, 'VOCdevkit', 'VOC2012', 'ImageSets',
                 'Segmentation', 'seg11valid.txt')).readlines()]
             for it in data_list:
                 item = (
@@ -122,9 +124,9 @@ class VOC(data.Dataset):
                     Path(mask_path, it + '.png'))   # Path to val mask
                 items.append(item)
         else:
-            img_path = Path(ROOT, 'VOCdevkit (test)', 'VOC2012', 'JPEGImages')
+            img_path = Path(self.root_dir, 'VOCdevkit (test)', 'VOC2012', 'JPEGImages')
             data_list = [l.strip('\n') for l in open(Path(
-                ROOT, 'VOCdevkit (test)', 'VOC2012', 'ImageSets',
+                self.root_dir, 'VOCdevkit (test)', 'VOC2012', 'ImageSets',
                 'Segmentation', 'test.txt')).readlines()]
             for it in data_list:
                 items.append((img_path, it))

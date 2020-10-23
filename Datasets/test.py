@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 
 
-class Test():
+class TEST():
     """ TestDataset
 
     Attributes:
